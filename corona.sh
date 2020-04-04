@@ -5,16 +5,16 @@ function getData {
     read input_state
     # Translate lines in file to lowercase and input_state to lowercase to
     input_state=$(echo $input_state | tr '[A-Z]' '[a-z]')
-    check_state=$(cat covid.csv | tr '[A-Z]' '[a-z]' | grep "$input_state" | wc -l)
+    check_state=$(grep -i "$input_state" covid.csv | wc -l)
     [[ ! $check_state -gt 0 ]] && echo "$input_state is not a valid state. Check spelling and casing of input" && exit 1
     # If state is found in lines then above will not go through
     # Get last two days of data
-    two_days=$(cat covid.csv | tr '[A-Z]' '[a-z]' | grep "$input_state" |  # echo lines only with New Jersey
+    two_days=$(grep -i "$input_state" covid.csv |  # echo lines only with New Jersey
                     tail -n2 | # Get last two days of data
                     head -n1 | # Output First line of file
                     cut -d"," -f 2,4,5 # Cut at every ',' (delimiter) and show specific fields
                 )
-    one_day=$(cat covid.csv | tr '[A-Z]' '[a-z]' | grep "$input_state" |
+    one_day=$(grep -i "$input_state" covid.csv |
                     tail -1 | # Get last day of data
                     cut -d"," -f 2,4,5 # Cut at every ',' (delimiter) and show specific field 
                 )
