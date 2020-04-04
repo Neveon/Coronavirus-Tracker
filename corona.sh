@@ -1,16 +1,20 @@
 #!/bin/bash
 
 function getData {
-    printf '%s' 'Input any US state (Watch spelling and casing): '
+    printf '%s' 'Input any US state (Ex: New Jersey): '
     read input_state
-    check_state=$(cat covid.csv | grep "$input_state" | wc -l)
+    # Translate lines in file to lowercase and input_state to lowercase to
+    input_state=$(echo $input_state | tr '[A-Z]' '[a-z]')
+    check_state=$(cat covid.csv | tr '[A-Z]' '[a-z]' | grep "$input_state" | wc -l)
     [[ ! $check_state -gt 0 ]] && echo "$input_state is not a valid state. Check spelling and casing of input" && exit 1
-    two_days=$(grep "$input_state" covid.csv | # Output lines only with New Jersey
+    # If state is found in lines then above will not go through
+    # Get last two days of data
+    two_days=$(cat covid.csv | tr '[A-Z]' '[a-z]' | grep "$input_state" |  # echo lines only with New Jersey
                     tail -n2 | # Get last two days of data
                     head -n1 | # Output First line of file
                     cut -d"," -f 2,4,5 # Cut at every ',' (delimiter) and show specific fields
                 )
-    one_day=$(grep "$input_state" covid.csv |
+    one_day=$(cat covid.csv | tr '[A-Z]' '[a-z]' | grep "$input_state" |
                     tail -1 | # Get last day of data
                     cut -d"," -f 2,4,5 # Cut at every ',' (delimiter) and show specific field 
                 )
@@ -30,7 +34,7 @@ function getData {
                     cut -d"," -f 2
                     )
     # Change in cases since last update
-    delta_cases=$(($num_cases_one-$num_cases_two))
+    delta_cases=$(($num_cases_one - $num_cases_two))
     printf '%s(%s) ' "$num_cases_one" "$delta_cases ▴" 
     num_deaths_two=$(echo $two_days | 
                     cut -d"," -f 3
@@ -39,8 +43,8 @@ function getData {
                     cut -d"," -f 3
                     )
     # Change in deaths since last update
-    dealta_deaths=$(($num_deaths_one-$num_deaths_two))
-    printf '%s(%s)' "$num_deaths_one" "$dealta_deaths ☠"
+    delta_deaths=$(($num_deaths_one - $num_deaths_two))
+    printf '%s(%s)\n' "$num_deaths_one" "$delta_deaths ☠"
 }
 
 #Check if covid.csv exists in current directory
