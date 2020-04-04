@@ -15,9 +15,8 @@ function getData {
                     cut -d"," -f 2,4,5 # Cut at every ',' (delimiter) and show specific field 
                 )
     #Date of last update
-    last_update=$(echo $one_day |
-                        tail -1 |
-                        cut -d"," -f 1
+    last_update=$(stat -c %y covid.csv |
+                       cut -d' ' -f 1
                 )
     current_date=$(date +%Y-%m-%d)
     #If last update is not equal to current date, then update covid.csv
