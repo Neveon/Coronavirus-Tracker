@@ -4,12 +4,12 @@ function getData {
     read input_state
     check_state=$(cat covid.csv | grep "$input_state" | wc -l)
     [[ check_state -gt 0 ]] || echo "$input_state is not a valid state. Check spelling and casing of input" && exit 1
-    two_days=$(grep "New Jersey" covid.csv | # Output lines only with New Jersey
+    two_days=$(grep "$input_state" covid.csv | # Output lines only with New Jersey
                     tail -n2 | # Get last two days of data
                     head -n1 | # Output First line of file
                     cut -d"," -f 2,4,5 # Cut at every ',' (delimiter) and show specific fields
                 )
-    one_day=$(grep "New Jersey" covid.csv |
+    one_day=$(grep "$input_state" covid.csv |
                     tail -1 | # Get last day of data
                     cut -d"," -f 2,4,5 # Cut at every ',' (delimiter) and show specific field 
                 )
