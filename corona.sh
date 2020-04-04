@@ -1,9 +1,10 @@
 #!/bin/bash
 
 function getData {
+    printf '%s' 'Input any US state (Watch spelling and casing): '
     read input_state
     check_state=$(cat covid.csv | grep "$input_state" | wc -l)
-    [[ check_state -gt 0 ]] || echo "$input_state is not a valid state. Check spelling and casing of input" && exit 1
+    [[ ! $check_state -gt 0 ]] && echo "$input_state is not a valid state. Check spelling and casing of input" && exit 1
     two_days=$(grep "$input_state" covid.csv | # Output lines only with New Jersey
                     tail -n2 | # Get last two days of data
                     head -n1 | # Output First line of file
