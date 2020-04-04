@@ -1,8 +1,8 @@
 # Coronavirus-Tracker
 
-- Change `'New Jersey'` to any state to obtain data (case sensitive)
+- Input any state (Check spelling and casing! Ex: New Jersey)
 - Then run `corona.sh`
 
 ```bash
-    bash corona.sh
+bash corona.sh
 ```
