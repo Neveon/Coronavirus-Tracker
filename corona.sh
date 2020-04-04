@@ -1,6 +1,9 @@
 #!/bin/bash
 
 function getData {
+    read input_state
+    check_state=$(cat covid.csv | grep "$input_state" | wc -l)
+    [[ check_state -gt 0 ]] || echo "$input_state is not a valid state. Check spelling and casing of input" && exit 1
     two_days=$(grep "New Jersey" covid.csv | # Output lines only with New Jersey
                     tail -n2 | # Get last two days of data
                     head -n1 | # Output First line of file
@@ -28,7 +31,7 @@ function getData {
                     )
     # Change in cases since last update
     delta_cases=$(($num_cases_one-$num_cases_two))
-    printf '%s ' "$delta_cases ▴" 
+    printf '%s(%s) ' "$num_cases_one" "$delta_cases ▴" 
     num_deaths_two=$(echo $two_days | 
                     cut -d"," -f 3
                     )
@@ -37,7 +40,7 @@ function getData {
                     )
     # Change in deaths since last update
     dealta_deaths=$(($num_deaths_one-$num_deaths_two))
-    printf '%s' "$dealta_deaths ☠"
+    printf '%s(%s)' "$num_deaths_one" "$dealta_deaths ☠"
 }
 
 #Check if covid.csv exists in current directory
