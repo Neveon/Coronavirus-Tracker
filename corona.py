@@ -1,50 +1,77 @@
+# os and Path used to get path
 import os
-import sys
-import subprocess
 from pathlib import Path
-from configparser import ConfigParser
+# To use terminal command line
+import subprocess
+# For dealing with date and updating covid.csv
 from datetime import datetime
 from datetime import timedelta
 
-# config parser setup
-config = ConfigParser()
-configFilePath = str(os.path.dirname(os.path.abspath(__file__))) + '/script.config'
-config.read(configFilePath)
-
+# path to current working directory (cwd)
+FILE_PATH = os.path.abspath(os.getcwd())
 
 # global variables
-directory = config.get('DEFAULT', 'directory')
+directory = FILE_PATH
 state = ''
 
-def updateCSV():
-    # Use pathlib as an object-oriented way to check for covid.csv
-    covid_csv = Path(directory + '/covid.csv')
-    if not covid_csv.is_file():
-        # file does not exist, create it
-        print('Downloading covid.csv data...\n')
-        subprocess.check_call('curl https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv > covid.csv')
-        #covid_lines = [covid_lines[-2],covid_lines[-1]]
-    else: # Read latest date in file, if not today then update file
-        #current_date = datetime.today().strftime('%Y-%m-%d')
-        #yesterday = datetime.today()- timedelta(days=1)
-        #prev_date = yesterday.strftime('%Y-%m-%d') 
+# Update covid.csv file based on last data point in given array
+def update_csv(covid_lines):
+
+    # Read latest date in file, if not today then update file
+    current_date = datetime.today().strftime('%Y-%m-%d')
+
+    # csv_date is based on latest date in file
+    last_data = covid_lines[-1]
+    csv_date = last_data.split(",")[0]
+
+    # python 3 print format
+    print(f"\n\nFile last updated: {csv_date}")
+
+    # Check if file does not need to be updated by reading latest line of data
+    if current_date != csv_date:
         print('Updating covid.csv data...\n')
         # Silently (-s) curl csv data
-        subprocess.check_call('curl -s https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv > covid.csv', shell=True)
-    
-    # Return path to csv file
-    return covid_csv
+        subprocess.check_call(
+            'curl -s ' +
+            'https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv ' +
+            '> covid.csv',
+            shell=True
+        )
 
+        # Check if data in file updated successfully
+        file_handle = open(str(directory + '/covid.csv'), 'r')
+        line = file_handle.readlines()[-1]
+        csv_date = line.split(",")[0]
+        file_handle.close()
 
-def getDelta(prev, latest):
+        if current_date != csv_date:
+            print('API has not updated their data, check back later\n')
+        else:
+            print('Successfully updated covid.csv\n')
+
+# Get change in date
+def delta(prev, latest):
     #Get change in cases and deaths from 2nd to last update and latest update
     delta_cases = latest[0] - prev[0]
     delta_deaths = latest[1] - prev[1]
     # Returns as tuple
     return delta_cases, delta_deaths
 
-def checkState(state, covid_csv_file):
-    covid_file = open(str(covid_csv_file), 'r')
+# Check if state exists in file
+def checkState(state):
+    # Check if covid.csv exists
+    csv = Path(directory + '/covid.csv')
+    if not csv.is_file():
+        # file does not exist, create it
+        print('Downloading covid.csv data...\n')
+        subprocess.check_call(
+            'curl -s ' +
+            'https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv ' +
+            '> covid.csv',
+            shell=True
+        )
+
+    covid_file = open(csv, 'r')
     covid_lines = []
 
     for line in covid_file:
@@ -56,13 +83,17 @@ def checkState(state, covid_csv_file):
 
     # Return lines with data of inputted state or 0 if not found
     if len(covid_lines) > 0:
+        # Check if csv needs to be updated using the last data point in lines with state
+        update_csv(covid_lines)
+
         return covid_lines
     else:
+        print("State not found")
         return 0
 
 def getData(covid_lines):
     # Get the latest updates for the last two days
-    covid_lines = [covid_lines[-2],covid_lines[-1]]
+    covid_lines = [covid_lines[-2], covid_lines[-1]]
 
     # Split data and get the number of cases and deaths
     date_one = covid_lines[0].split(',')
@@ -73,22 +104,31 @@ def getData(covid_lines):
     date_two = [int(date_two[3]), int(date_two[4])]
 
     # Get delta cases and delta deaths
-    deltas = getDelta(date_one, date_two)
+    deltas = delta(date_one, date_two)
     delta_cases = deltas[0]
     delta_deaths = deltas[1]
 
     # Print out number of cases and deaths with their appropriate deltas
     print('Cases        Deaths')
-    print(str(date_two[0]) + '(' + str(delta_cases) + '▴) ' + str(date_two[1]) + '(' + str(delta_deaths) + '☠)')
+    print(str(date_two[0]) + '(' + str(delta_cases) + '▴) ' + str(date_two[1]) + '(' + str(delta_deaths) + '☠▴)')
 
 # Running program based on input
-while len(state) == 0:
+while len(state) < 4:
     state = input('Enter your US state (ex: New Jersey): ')
-    # Check if csv needs to be downloaded or updated
-    covid_csv = updateCSV()
+
     # Shortest state name has length of 4
-    if len(state) > 4:
-        # Check if state in lines
-        state_data = checkState(state, covid_csv)
+    if len(state) >= 4:
+
+        # Check if state in csv file
+        state_data = checkState(state)
+
+        # Check if there is any state data by the return value of checkState()
         if state_data != 0:
             getData(state_data)
+            break
+        else:
+            # Reset state input since not found
+            state = ''
+    else:
+        # Any input less than 4 letters is not a state
+        print("State not found")
