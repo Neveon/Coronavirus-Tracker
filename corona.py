@@ -110,7 +110,7 @@ def getData(covid_lines):
 
     # Print out number of cases and deaths with their appropriate deltas
     print('Cases        Deaths')
-    print(str(date_two[0]) + '(' + str(delta_cases) + '▴) ' + str(date_two[1]) + '(' + str(delta_deaths) + '☠▴)')
+    print(str(date_two[0]) + '(' + str(delta_cases) + '▴) ' + str(date_two[1]) + '(' + str(delta_deaths) + '☠ ▴)')
 
 # Running program based on input
 while len(state) < 4:
