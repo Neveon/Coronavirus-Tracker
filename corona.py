@@ -6,6 +6,10 @@ import subprocess
 # For dealing with date and updating covid.csv
 from datetime import datetime
 from datetime import timedelta
+# For downloading csv fileand writing to file
+import requests
+requests.packages.urllib3.disable_warnings()
+import shutil
 
 # path to current working directory (cwd)
 FILE_PATH = os.path.abspath(os.getcwd())
@@ -13,6 +17,20 @@ FILE_PATH = os.path.abspath(os.getcwd())
 # global variables
 directory = FILE_PATH
 state = ''
+
+def downloadCSV():
+
+    url = 'https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv'
+    r = requests.get(url, verify=False, stream=True)
+    if r.status_code != 200:
+        print(r)
+        print("Failure!")
+        exit()
+    else:
+        r.raw.decode_content = True
+        with open("covid.csv", "wb") as f:
+            shutil.copyfileobj(r.raw, f)
+        print("Successfully Updated CSV file \n- Note some states may not have a change from a previous date, so their date is not updated")
 
 # Update covid.csv file based on last data point in given array
 def update_csv(covid_lines):
@@ -31,12 +49,8 @@ def update_csv(covid_lines):
     if current_date != csv_date:
         print('Updating covid.csv data...\n')
         # Silently (-s) curl csv data
-        subprocess.check_call(
-            'curl -s ' +
-            'https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv ' +
-            '> covid.csv',
-            shell=True
-        )
+
+        downloadCSV()
 
         # Check if data in file updated successfully
         file_handle = open(str(directory + '/covid.csv'), 'r')
@@ -44,8 +58,10 @@ def update_csv(covid_lines):
         csv_date = line.split(",")[0]
         file_handle.close()
 
+        csv_datetime = datetime.strptime(csv_date, "%Y-%m-%d")
+
         if current_date != csv_date:
-            print('API has not updated their data, check back later\n')
+            print(f"Your state has not updated their data to today\'s date. \nMost recent Data is from: {csv_datetime.strftime('%Y-%m-%d')}\n")
         else:
             print('Successfully updated covid.csv\n')
 
@@ -64,12 +80,7 @@ def checkState(state):
     if not csv.is_file():
         # file does not exist, create it
         print('Downloading covid.csv data...\n')
-        subprocess.check_call(
-            'curl -s ' +
-            'https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv ' +
-            '> covid.csv',
-            shell=True
-        )
+        downloadCSV()
 
     covid_file = open(csv, 'r')
     covid_lines = []
