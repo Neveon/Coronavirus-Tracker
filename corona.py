@@ -11,6 +11,9 @@ import requests
 requests.packages.urllib3.disable_warnings()
 import shutil
 
+# For visualization
+from corona_map import CovidMap
+
 # path to current working directory (cwd)
 FILE_PATH = os.path.abspath(os.getcwd())
 
@@ -136,6 +139,8 @@ while len(state) < 4:
         # Check if there is any state data by the return value of checkState()
         if state_data != 0:
             getData(state_data)
+            map = CovidMap()
+            map.create(state)
             break
         else:
             # Reset state input since not found
